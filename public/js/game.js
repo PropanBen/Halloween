@@ -11,7 +11,7 @@ var config = {
         gravity: { y: 0 }
       }
     },
-    scene:  [menuscene,gamescene]
+    scene:  [menuscene,gamescene],
     
   };
 
@@ -19,7 +19,6 @@ var config = {
   var game = new Phaser.Game(config);
 
   function preload() {
-
   }
 
   function create() {
