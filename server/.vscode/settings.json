@@ -1,0 +1,20 @@
+{
+    "files.associations": {
+        "*.json": "jsonc"
+    },
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": true,
+    "[json]": {
+        "files.eol": "\n"
+    },
+    "editor.guides.indentation": true,
+    "editor.guides.highlightActiveIndentation": true,
+    "files.eol": "\n",
+    "[yaml]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[javascript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    }
+}
