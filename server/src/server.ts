@@ -17,7 +17,12 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents>(server, {
 
 const port = 8081;
 
-app.use(express.static(join(__dirname, "..", "app", "dist")));
+const frontendPath = join(__dirname, "..", "..", "app", "dist")
+
+app.use(express.static(frontendPath));
+app.use("/", (req, res) => {
+    res.sendFile(join(frontendPath, "index.html"))
+})
 
 const players: Map<string, { id: string; username: string }> = new Map();
 
