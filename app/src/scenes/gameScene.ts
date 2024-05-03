@@ -48,11 +48,11 @@ export class GameScene extends Scene {
         const map = this.make.tilemap({ key: "tilemap" });
 
         // Add tilesets
-        // const grasTileset = map.addTilesetImage('gras')!;
+        const grasTileset = map.addTilesetImage('gras')!;
         const stoneTileset = map.addTilesetImage("stone")!;
 
         // Create layers
-        // const groundLayer = map.createLayer('ground', grasTileset, 0, 0);
+         map.createLayer('ground', grasTileset, 0, 0);
         const obstacleLayer = map.createLayer("obstacles", stoneTileset, 0, 0)!;
 
         // Define World Bounds
