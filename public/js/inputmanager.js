@@ -1,7 +1,12 @@
 class inputmanager {
     constructor(scene) {
         this.scene = scene;
-        this.cursors = scene.input.keyboard.createCursorKeys();
+        this.keys = scene.input.keyboard.addKeys({
+            'up': Phaser.Input.Keyboard.KeyCodes.W,
+            'down': Phaser.Input.Keyboard.KeyCodes.S,
+            'left': Phaser.Input.Keyboard.KeyCodes.A,
+            'right': Phaser.Input.Keyboard.KeyCodes.D
+        });
         this.velocity = 200;
 
         // Create animations
@@ -35,47 +40,44 @@ class inputmanager {
     }
 
     updatePlayerMovement() {
-        const { cursors, velocity } = this;
+        const { keys, velocity } = this;
         const player = this.scene.player;
 
-     if (cursors.left.isDown) {
-        player.setVelocityX(-velocity);
-    } else if (cursors.right.isDown) {
-        player.setVelocityX(velocity);
-    } else {
-        player.setVelocityX(0);
-    }
-  
-    if (cursors.up.isDown) {
-        player.setVelocityY(-velocity);
-    } else if (cursors.down.isDown) {
-        player.setVelocityY(velocity);
-    } else {
-        player.setVelocityY(0);
-    }
-  
-    // Play animations based on direction
-    if (cursors.left.isDown && cursors.up.isDown) {
-        player.anims.play('walk_left', true);
-    } else if (cursors.right.isDown && cursors.up.isDown) {
-        player.anims.play('walk_right', true);
-    } else if (cursors.left.isDown && cursors.down.isDown) {
-        player.anims.play('walk_left', true);
-    } else if (cursors.right.isDown && cursors.down.isDown) {
-        player.anims.play('walk_right', true);
-    } else if (cursors.left.isDown) {
-        player.anims.play('walk_left', true);
-    } else if (cursors.right.isDown) {
-        player.anims.play('walk_right', true);
-    } else if (cursors.up.isDown) {
-        player.anims.play('walk_up', true);
-    } else if (cursors.down.isDown) {
-        player.anims.play('walk_down', true);
-    } else {
-        player.anims.stop();
-    }
+        if (keys.left.isDown) {
+            player.setVelocityX(-velocity);
+        } else if (keys.right.isDown) {
+            player.setVelocityX(velocity);
+        } else {
+            player.setVelocityX(0);
+        }
 
+        if (keys.up.isDown) {
+            player.setVelocityY(-velocity);
+        } else if (keys.down.isDown) {
+            player.setVelocityY(velocity);
+        } else {
+            player.setVelocityY(0);
+        }
+
+        // Play animations based on direction
+        if (keys.left.isDown && keys.up.isDown) {
+            player.anims.play('walk_left', true);
+        } else if (keys.right.isDown && keys.up.isDown) {
+            player.anims.play('walk_right', true);
+        } else if (keys.left.isDown && keys.down.isDown) {
+            player.anims.play('walk_left', true);
+        } else if (keys.right.isDown && keys.down.isDown) {
+            player.anims.play('walk_right', true);
+        } else if (keys.left.isDown) {
+            player.anims.play('walk_left', true);
+        } else if (keys.right.isDown) {
+            player.anims.play('walk_right', true);
+        } else if (keys.up.isDown) {
+            player.anims.play('walk_up', true);
+        } else if (keys.down.isDown) {
+            player.anims.play('walk_down', true);
+        } else {
+            player.anims.stop();
+        }
     }
 }
-
-
