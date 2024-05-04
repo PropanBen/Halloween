@@ -1,0 +1,8 @@
+{
+    "events": {
+        "start": "clear"
+    },
+    "execMap": {
+        "ts": "tsc --noEmit && node --loader ts-node/esm"
+    }
+}

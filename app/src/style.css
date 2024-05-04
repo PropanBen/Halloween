@@ -1,0 +1,23 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+#head {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Canvas styles */
+#gameCanvas {
+    display: block;
+    width: 90%;
+    height: 100%;
+    margin: 0 auto;
+    border: 2px solid black;
+    margin-left: 5%;
+    margin-right: 5%;
+}
