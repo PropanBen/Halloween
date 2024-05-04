@@ -1,23 +1,18 @@
 class playertemplate {
-    constructor() {
- 
-
-        this.race = {
-            '1': 'vampire',
-            '2': 'skeleton',
-            '3': 'zombie',
-            '4': 'witch',
-            '5': 'mummy',
-            '6': 'spider',
-            '7': 'bat',
-            '8': 'werewolf',
-            '9': 'gargoyle',
-            '10': 'ghost'
-        };
-
-      
-    }
-
+  constructor() {
+    this.race = {
+      0: "vampire",
+      1: "skeleton",
+      2: "zombie",
+      3: "witch",
+      4: "mummy",
+      5: "spider",
+      6: "bat",
+      7: "werewolf",
+      8: "gargoyle",
+      9: "ghost",
+    };
+  }
 }
 
 module.exports = playertemplate;

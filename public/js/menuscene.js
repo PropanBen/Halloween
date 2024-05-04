@@ -1,79 +1,159 @@
 // Define menuscene
 class menuscene extends Phaser.Scene {
-    constructor() {
-        super({ key: 'menuscene' });
-    }
+  constructor() {
+    super({ key: "menuscene" });
+  }
 
-    preload() {
+  preload() {}
 
- 
-        this.load.spritesheet('player', 'assets/sprites/player/player.png', { frameWidth: 64, frameHeight: 64 });
+  create() {
+    let currentRaceIndex = 0;
+    const races = [];
+    this.socket = io();
+    let currentImage = null;
 
-    }
+    this.playerText = this.add.text(20, 20, "Connected Players :", {
+      fill: "#fff",
+    });
 
-    create() {
+    this.socket.on("currentPlayers", (players) => {
+      console.log("Received players data:", players);
 
-    
-            this.playerText = this.add.text(20, 20, 'Connected Players :', { fill: '#fff' });
+      const playerNames = [];
 
-            this.socket = io();
-
-            this.socket.on('playertemplate', (playertemplate) => {
-                console.log(playertemplate);
-              });
-            
-   
-            //Get Current Players
-            this.socket.on('currentPlayers', (playerList) => {
-            const playerNames = Object.values(playerList).map(player => player.playername);
-            this.playerText.setText('Connected Players: ' + playerNames.join(', '));
-            });
-   
-        
-            // Create input field for username
-            const gameCanvas = document.getElementById('gameCanvas');
-        
-            const usernameInput = document.createElement('input');
-            usernameInput.type = 'text';
-            usernameInput.name = 'username';
-            usernameInput.placeholder = 'Enter your name';
-            usernameInput.style.fontSize = '20px';
-            usernameInput.style.padding = '10px';
-        
-            gameCanvas.appendChild(usernameInput);
-        
-            // Button to submit username
-            const submitButton = document.createElement('button');
-            submitButton.textContent = 'Submit';
-            submitButton.style.fontSize = '20px';
-            submitButton.style.padding = '10px';
-            submitButton.style.marginTop = '10px';
-        
-            submitButton.addEventListener('click', () => {
-                const username = usernameInput.value;
-                if (username.trim() !== '') {
-                    this.socket.emit('set_username', username);
-                    usernameInput.style.display = 'none';
-                    submitButton.style.display = 'none';
-                }
-            });
-        
-            gameCanvas.appendChild(submitButton);
-
-  
-            // Add a button to switch to the GameScene
-            const button = this.add.text(400, 400, 'Start Game', { fill: '#0f0' }).setInteractive();
-            button.on('pointerdown', () => {
-                this.scene.start('gamescene'); // Replace 'gamescene' with your actual key for the GameScene
-            });
+      for (const playerId in players) {
+        if (players.hasOwnProperty(playerId)) {
+          const player = players[playerId];
+          playerNames.push(player.playername);
         }
-        
-    
-    
+      }
+      const connectedPlayersString = playerNames.join(", ");
+      this.playerText.setText("Connected Players: " + connectedPlayersString);
+    });
 
-    update() {
+    this.socket.on("playertemplate", (playertemplate) => {
+      races.length = 0;
+      for (let key in playertemplate.race) {
+        if (playertemplate.race.hasOwnProperty(key)) {
+          races.push(playertemplate.race[key]);
+        }
+      }
+      if (!currentImage) {
+        currentImage = createImageObject(400, 200, races[0]);
+        createLeftButton();
+        createRightButton();
+      } else {
+        currentImage.src = "assets/sprites/player/" + races[0] + ".png";
+      }
+    });
 
+    function createImageObject(x, y, imageName) {
+      // Erstelle das Bildobjekt
+      const image = document.createElement("img");
+      const playerLabel = document.createElement("label");
+      playerLabel.textContent = "Wähle deine Spielfigur";
+      image.id = "playerImage";
+      image.src = "assets/sprites/player/" + imageName + ".png";
+
+      // Füge das Bildobjekt zum playerContainer hinzu
+      playerContainer.appendChild(image);
+      playerContainer.appendChild(playerLabel);
+
+      // Rückgabe des Bildobjekts
+      return image;
     }
 
+    //Menu
 
+    // Create Elements for the Menu
+    const menuContainer = document.createElement("div");
+    menuContainer.id = "menuContainer";
+    menuContainer.style.textAlign = "center";
+
+    const nameLabel = document.createElement("label");
+    nameLabel.id = "nameLabel";
+    nameLabel.textContent = "Gib deinen Namen ein";
+    const nameInput = document.createElement("input");
+    nameInput.type = "text";
+
+    const nameButton = document.createElement("button");
+    nameButton.id = "nameButton";
+    nameButton.textContent = "Absenden";
+
+    menuContainer.appendChild(nameLabel);
+    menuContainer.appendChild(document.createElement("br"));
+    menuContainer.appendChild(nameInput);
+    menuContainer.appendChild(document.createElement("br"));
+    menuContainer.appendChild(document.createElement("br"));
+    menuContainer.appendChild(nameButton);
+
+    // Add Menu to gameCanvas
+    gameCanvas.appendChild(menuContainer);
+
+    // Send Username to Server
+    nameButton.addEventListener("click", () => {
+      const player = {
+        username: nameInput.value,
+        playertemplateid: currentRaceIndex,
+      };
+
+      this.socket.emit("set_username", player);
+      menuContainer.style.display = "none";
+    });
+
+    // Player Selection
+    const playerContainer = document.createElement("div");
+    playerContainer.id = "playerContainer";
+    menuContainer.appendChild(playerContainer);
+
+    const buttonContainer = document.createElement("div");
+    buttonContainer.id = "buttonContauner";
+    playerContainer.appendChild(buttonContainer);
+
+    const leftButton = document.createElement("button");
+    function createLeftButton() {
+      // Erstelle den linken Button
+      leftButton.textContent = "<-";
+      leftButton.style.marginRight = "10px";
+      leftButton.onclick = function () {
+        // Gehe zum vorherigen Rennen
+        currentRaceIndex = (currentRaceIndex - 1 + races.length) % races.length;
+        updateImage();
+      };
+    }
+
+    // Füge den linken Button zum menuContainer hinzu
+    buttonContainer.appendChild(leftButton);
+
+    const rightButton = document.createElement("button");
+    function createRightButton() {
+      // Erstelle den rechten Button
+
+      rightButton.textContent = "->";
+      rightButton.onclick = function () {
+        // Gehe zum nächsten Rennen
+        currentRaceIndex = (currentRaceIndex + 1) % races.length;
+        updateImage();
+      };
+    }
+
+    // Füge den rechten Button zum menuContainer hinzu
+    buttonContainer.appendChild(rightButton);
+
+    function updateImage() {
+      // Aktualisiere das Bild mit dem nächsten Rennen
+      currentImage.src =
+        "assets/sprites/player/" + races[currentRaceIndex] + ".png";
+    }
+
+    // Add a button to switch to the GameScene
+    const button = this.add
+      .text(400, 400, "Start Game", { fill: "#0f0" })
+      .setInteractive();
+    button.on("pointerdown", () => {
+      this.scene.start("gamescene"); // Replace 'gamescene' with your actual key for the GameScene
+    });
+  }
+
+  update() {}
 }

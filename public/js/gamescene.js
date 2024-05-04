@@ -21,24 +21,20 @@ class gamescene extends Phaser.Scene {
     }
 
     create() {
-        this.socket = io();
-    //Screensize Config überschreiben
-    var canvasWidth = document.getElementById("gameCanvas").clientWidth;
-    var canvasHeight = document.getElementById("gameCanvas").clientHeight;
-    config.width = canvasWidth;
-    config.height = canvasHeight;
 
+
+    this.socket = io();
 
     //Map   
-    var map = this.make.tilemap({ key: 'tilemap' });
+    const map = this.make.tilemap({ key: 'tilemap' });
 
     // Add tilesets
-    var grasTileset = map.addTilesetImage('gras');
-    var stoneTileset = map.addTilesetImage('stone');
+    const grasTileset = map.addTilesetImage('gras');
+    const stoneTileset = map.addTilesetImage('stone');
   
     // Create layers
-    var groundLayer = map.createLayer('ground', grasTileset, 0, 0);
-    var obstacleLayer = map.createLayer('obstacles', stoneTileset, 0, 0);
+    const groundLayer = map.createLayer('ground', grasTileset, 0, 0);
+    const obstacleLayer = map.createLayer('obstacles', stoneTileset, 0, 0);
 
     // Define World Bounds
     this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
