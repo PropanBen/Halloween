@@ -12,19 +12,22 @@ app.get("/", function (req, res) {
 
 server.listen(8081, function () {
   io.on("connection", function (socket) {
+    console.log("ID " + socket.id);
     //Show avaiable Playercharacters
     const pt = new playertemplate();
-    io.emit("playertemplate", pt);
+    socket.emit("playertemplate", pt);
 
     //Show CurrentPlayers
-    io.emit("currentPlayers", playerlist);
+    socket.emit("players", playerlist);
 
     // Request Playername
     socket.emit("request_username");
 
+    socket.broadcast.emit("playerlist", playerlist);
+
     // Create Player, add it to playerlist
-    socket.on("set_username", ({ username, playertemplateid }) => {
-      var player = createPlayer(socket.id, username, playertemplateid);
+    socket.on("set_username", ({ playerid, username, playertemplateid }) => {
+      var player = createPlayer(playerid, username, playertemplateid);
       playerlist[socket.id] = player;
       io.emit("currentPlayers", playerlist);
     });

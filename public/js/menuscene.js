@@ -9,16 +9,14 @@ class menuscene extends Phaser.Scene {
   create() {
     let currentRaceIndex = 0;
     const races = [];
-    this.socket = io();
+
     let currentImage = null;
 
     this.playerText = this.add.text(20, 20, "Connected Players :", {
       fill: "#fff",
     });
 
-    this.socket.on("currentPlayers", (players) => {
-      console.log("Received players data:", players);
-
+    socket.on("currentPlayers", (players) => {
       const playerNames = [];
 
       for (const playerId in players) {
@@ -31,7 +29,7 @@ class menuscene extends Phaser.Scene {
       this.playerText.setText("Connected Players: " + connectedPlayersString);
     });
 
-    this.socket.on("playertemplate", (playertemplate) => {
+    socket.on("playertemplate", (playertemplate) => {
       races.length = 0;
       for (let key in playertemplate.race) {
         if (playertemplate.race.hasOwnProperty(key)) {
@@ -93,11 +91,12 @@ class menuscene extends Phaser.Scene {
     // Send Username to Server
     nameButton.addEventListener("click", () => {
       const player = {
+        playerid: socket.id,
         username: nameInput.value,
         playertemplateid: currentRaceIndex,
       };
 
-      this.socket.emit("set_username", player);
+      socket.emit("set_username", player);
       menuContainer.style.display = "none";
     });
 
@@ -151,7 +150,7 @@ class menuscene extends Phaser.Scene {
       .text(400, 400, "Start Game", { fill: "#0f0" })
       .setInteractive();
     button.on("pointerdown", () => {
-      this.scene.start("gamescene"); // Replace 'gamescene' with your actual key for the GameScene
+      this.scene.start("gamescene");
     });
   }
 
