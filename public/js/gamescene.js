@@ -5,7 +5,44 @@ class gamescene extends Phaser.Scene {
 
   preload() {
     this.load.image("background", "assets/sprites/world/background.png");
+
     this.load.spritesheet("player", "assets/sprites/player/player.png", {
+      frameWidth: 64,
+      frameHeight: 64,
+    });
+    this.load.spritesheet("vampire", "assets/sprites/player/vampire.png", {
+      frameWidth: 229,
+      frameHeight: 326,
+    });
+    this.load.spritesheet("skeleton", "assets/sprites/player/skeleton.png", {
+      frameWidth: 64,
+      frameHeight: 64,
+    });
+    this.load.spritesheet("zombie", "assets/sprites/player/zombie.png", {
+      frameWidth: 64,
+      frameHeight: 64,
+    });
+    this.load.spritesheet("witch", "assets/sprites/player/witch.png", {
+      frameWidth: 64,
+      frameHeight: 64,
+    });
+    this.load.spritesheet("mummy", "assets/sprites/player/mummy.png", {
+      frameWidth: 64,
+      frameHeight: 64,
+    });
+    this.load.spritesheet("spider", "assets/sprites/player/spider.png", {
+      frameWidth: 64,
+      frameHeight: 64,
+    });
+    this.load.spritesheet("bat", "assets/sprites/player/bat.png", {
+      frameWidth: 282,
+      frameHeight: 195,
+    });
+    this.load.spritesheet("werewolf", "assets/sprites/player/player.png", {
+      frameWidth: 64,
+      frameHeight: 64,
+    });
+    this.load.spritesheet("ghost", "assets/sprites/player/player.png", {
       frameWidth: 64,
       frameHeight: 64,
     });
@@ -19,8 +56,18 @@ class gamescene extends Phaser.Scene {
   }
 
   create() {
-    socket.on("currentPlayers", (players) => {
-      console.log(players);
+    let races = null;
+    let race = null;
+
+    socket.emit("getplayertemplates");
+    socket.on("playerstemplates", (playertemplate) => {
+      races = playertemplate;
+    });
+
+    socket.emit("getplayerlist");
+    socket.on("players", (players) => {
+      race = races["race"][players[socket.id].playertemplateid];
+      console.log(race);
     });
 
     const map = this.make.tilemap({ key: "tilemap" });
@@ -39,11 +86,8 @@ class gamescene extends Phaser.Scene {
     // Set collision for obstacle layer
     obstacleLayer.setCollisionByExclusion([-1]); // Collide with all tiles except those with index -1
 
-    socket.on("players", (players) => {
-      console.log(players);
-    });
-
     // Player
+
     this.player = this.physics.add.sprite(800, 200, "player");
     this.physics.world.enable(this.player);
     this.player.setCollideWorldBounds(true);

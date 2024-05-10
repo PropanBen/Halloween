@@ -2,7 +2,7 @@ var express = require("express");
 var app = express();
 var server = require("http").Server(app);
 var io = require("socket.io")(server);
-const playertemplate = require("./public/js/playertemplate.js");
+const playertemplate = require("./public/js/playertemplate");
 var playerlist = {};
 
 app.use(express.static(__dirname + "/public"));
@@ -12,13 +12,20 @@ app.get("/", function (req, res) {
 
 server.listen(8081, function () {
   io.on("connection", function (socket) {
-    console.log("ID " + socket.id);
     //Show avaiable Playercharacters
     const pt = new playertemplate();
     socket.emit("playertemplate", pt);
 
     //Show CurrentPlayers
-    socket.emit("players", playerlist);
+    io.emit("players", playerlist);
+
+    socket.on("getplayerlist", (...args) => {
+      socket.emit("players", playerlist);
+    });
+
+    socket.on("getplayertemplates", () => {
+      socket.emit("playerstemplates", pt);
+    });
 
     // Request Playername
     socket.emit("request_username");
