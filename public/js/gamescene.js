@@ -38,11 +38,15 @@ class gamescene extends Phaser.Scene {
       frameWidth: 282,
       frameHeight: 195,
     });
-    this.load.spritesheet("werewolf", "assets/sprites/player/player.png", {
+    this.load.spritesheet("werewolf", "assets/sprites/player/werewolf.png", {
       frameWidth: 64,
       frameHeight: 64,
     });
-    this.load.spritesheet("ghost", "assets/sprites/player/player.png", {
+    this.load.spritesheet("ghost", "assets/sprites/player/ghost.png", {
+      frameWidth: 64,
+      frameHeight: 64,
+    });
+    this.load.spritesheet("alien", "assets/sprites/player/alien.png", {
       frameWidth: 64,
       frameHeight: 64,
     });
@@ -56,18 +60,46 @@ class gamescene extends Phaser.Scene {
   }
 
   create() {
+    // Declare variables to store player template data
     let races = null;
     let race = null;
+    let playerList = null;
 
-    socket.emit("getplayertemplates");
-    socket.on("playerstemplates", (playertemplate) => {
-      races = playertemplate;
+    socket.on("currentPlayers", (players) => {
+      playerList = players;
     });
 
-    socket.emit("getplayerlist");
+    // Request player template data from the server
+    socket.emit("getplayertemplates");
+
+    // Listen for player template data from the server
+    socket.on("playerstemplates", (playertemplate) => {
+      races = playertemplate;
+
+      // Once player template data is received, request player list
+      socket.emit("getplayerlist");
+    });
+
+    // Listen for player list from the server
     socket.on("players", (players) => {
+      // Retrieve the player's race from the player template data
       race = races["race"][players[socket.id].playertemplateid];
-      console.log(race);
+      playerList = players;
+
+      // Create the player sprite using the received race data
+      this.player = this.physics.add.sprite(800, 200, race);
+      this.physics.world.enable(this.player);
+      this.player.setCollideWorldBounds(true);
+      this.player.setScale(1, 1);
+
+      // Create input manager with the sprite key of the player template
+      this.inputmanager = new inputmanager(this, race, socket.id);
+
+      // Set collision with obstacle layer
+      this.physics.add.collider(this.player, obstacleLayer);
+
+      this.cameramanager = new cameramanager(this);
+      this.cameramanager.cameraFollow(this.player);
     });
 
     const map = this.make.tilemap({ key: "tilemap" });
@@ -86,26 +118,42 @@ class gamescene extends Phaser.Scene {
     // Set collision for obstacle layer
     obstacleLayer.setCollisionByExclusion([-1]); // Collide with all tiles except those with index -1
 
-    // Player
-
-    this.player = this.physics.add.sprite(800, 200, "player");
-    this.physics.world.enable(this.player);
-    this.player.setCollideWorldBounds(true);
-    this.player.setScale(1, 1);
-    this.physics.add.collider(this.player, obstacleLayer);
-
-    // Collide player with obstacle layer
-    this.physics.add.collider(this.player, obstacleLayer);
-
-    this.inputmanager = new inputmanager(this);
-    this.cameramanager = new cameramanager(this);
-
-    //Camera
-    this.cameramanager = new cameramanager(this);
-    this.cameramanager.cameraFollow(this.player);
+    socket.on("playerMoved", function (movementData) {
+      // Update the position and animation of other players based on received data
+      if (movementData && movementData.playerId !== socket.id) {
+        const otherPlayer = playerList && playerList[movementData.playerId];
+        if (otherPlayer) {
+          console.log("otherPlayer:", otherPlayer);
+          if (otherPlayer.anims && otherPlayer.anims.play) {
+            if (otherPlayer.anims.exists(movementData.animation)) {
+              otherPlayer.anims.play(movementData.animation, true);
+              otherPlayer.x = movementData.x;
+              otherPlayer.y = movementData.y;
+            } else {
+              console.error(
+                "Animation",
+                movementData.animation,
+                "doesn't exist for player:",
+                otherPlayer
+              );
+            }
+          } else {
+            console.error("Invalid animation data for player:", otherPlayer);
+          }
+        } else {
+          console.error(
+            "Player data not found for playerId:",
+            movementData.playerId
+          );
+        }
+      }
+    });
   }
 
   update() {
-    this.inputmanager.updatePlayerMovement();
+    if (this.inputmanager && this.player) {
+      // Call the updatePlayerMovement method of inputmanager
+      this.inputmanager.updatePlayerMovement();
+    }
   }
 }

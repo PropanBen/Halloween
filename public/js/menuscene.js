@@ -26,7 +26,7 @@ class menuscene extends Phaser.Scene {
         }
       }
       const connectedPlayersString = playerNames.join(", ");
-      this.playerText.setText("Connected Players: " + connectedPlayersString);
+      //  this.playerText.setText("Connected Players: " + connectedPlayersString);
     });
 
     socket.on("playertemplate", (playertemplate) => {

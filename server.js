@@ -41,11 +41,20 @@ server.listen(8081, function () {
     // Send new player to all other players
     socket.broadcast.emit("newPlayer", playerlist[socket.id]);
 
-    // Delete player from playerlist nad send current player list
     socket.on("disconnect", function () {
       delete playerlist[socket.id];
-      socket.emit("logout", socket.id);
-      socket.broadcast.emit("currentPlayers", playerlist);
+      io.emit("currentPlayers", playerlist); // Emit to all clients
+    });
+
+    // Listen for player movement data from clients
+    socket.on("playerMovement", function (movementData) {
+      // Broadcast the player movement data to all connected clients including the sender
+      io.emit("playerMoved", {
+        playerId: socket.id,
+        x: movementData.x,
+        y: movementData.y,
+        animation: movementData.animation,
+      });
     });
   });
 

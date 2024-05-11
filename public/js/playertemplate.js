@@ -11,6 +11,7 @@ class playertemplate {
       7: "werewolf",
       8: "gargoyle",
       9: "ghost",
+      10: "alien",
     };
   }
 }

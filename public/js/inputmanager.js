@@ -1,6 +1,9 @@
 class inputmanager {
-  constructor(scene) {
+  constructor(scene, spriteKey, playerID) {
     this.scene = scene;
+    this.spriteKey = spriteKey;
+    this.playerID = playerID; // Store playerID as a property
+
     this.keys = scene.input.keyboard.addKeys({
       up: Phaser.Input.Keyboard.KeyCodes.W,
       down: Phaser.Input.Keyboard.KeyCodes.S,
@@ -9,37 +12,79 @@ class inputmanager {
     });
     this.velocity = 200;
 
+    this.createAnimations();
+    this.updatePlayerMovement();
+  }
+
+  createAnimations() {
+    const { scene, spriteKey, playerID } = this;
+
+    this.idleAnimationKey = "idle_" + playerID;
+    this.walkDownAnimationKey = "walk_down_" + playerID;
+    this.walkUpAnimationKey = "walk_up_" + playerID;
+    this.walkLeftAnimationKey = "walk_left_" + playerID;
+    this.walkRightAnimationKey = "walk_right_" + playerID;
+
     // Create animations
-    scene.anims.create({
-      key: "walk_down",
-      frames: scene.anims.generateFrameNumbers("player", { start: 0, end: 3 }),
-      frameRate: 10,
-      repeat: -1,
-    });
+    if (!scene.anims.exists(this.idleAnimationKey)) {
+      scene.anims.create({
+        key: this.idleAnimationKey,
+        frames: scene.anims.generateFrameNumbers(spriteKey, {
+          start: 0,
+          end: 0,
+        }),
+        frameRate: 10,
+        repeat: -1,
+      });
+    }
 
-    scene.anims.create({
-      key: "walk_up",
-      frames: scene.anims.generateFrameNumbers("player", {
-        start: 12,
-        end: 15,
-      }),
-      frameRate: 10,
-      repeat: -1,
-    });
+    if (!scene.anims.exists(this.walkDownAnimationKey)) {
+      scene.anims.create({
+        key: this.walkDownAnimationKey,
+        frames: scene.anims.generateFrameNumbers(spriteKey, {
+          start: 0,
+          end: 3,
+        }),
+        frameRate: 10,
+        repeat: -1,
+      });
+    }
 
-    scene.anims.create({
-      key: "walk_left",
-      frames: scene.anims.generateFrameNumbers("player", { start: 4, end: 7 }),
-      frameRate: 10,
-      repeat: -1,
-    });
+    if (!scene.anims.exists(this.walkUpAnimationKey)) {
+      scene.anims.create({
+        key: this.walkUpAnimationKey,
+        frames: scene.anims.generateFrameNumbers(spriteKey, {
+          start: 12,
+          end: 15,
+        }),
+        frameRate: 10,
+        repeat: -1,
+      });
+    }
 
-    scene.anims.create({
-      key: "walk_right",
-      frames: scene.anims.generateFrameNumbers("player", { start: 8, end: 11 }),
-      frameRate: 10,
-      repeat: -1,
-    });
+    if (!scene.anims.exists(this.walkLeftAnimationKey)) {
+      scene.anims.create({
+        key: this.walkLeftAnimationKey,
+        frames: scene.anims.generateFrameNumbers(spriteKey, {
+          start: 4,
+          end: 7,
+        }),
+        frameRate: 10,
+        repeat: -1,
+      });
+    }
+
+    if (!scene.anims.exists(this.walkRightAnimationKey)) {
+      scene.anims.create({
+        key: this.walkRightAnimationKey,
+        frames: scene.anims.generateFrameNumbers(spriteKey, {
+          start: 8,
+          end: 11,
+        }),
+        frameRate: 10,
+        repeat: -1,
+      });
+    }
   }
 
   updatePlayerMovement() {
@@ -64,23 +109,31 @@ class inputmanager {
 
     // Play animations based on direction
     if (keys.left.isDown && keys.up.isDown) {
-      player.anims.play("walk_left", true);
+      player.anims.play(this.walkLeftAnimationKey, true);
     } else if (keys.right.isDown && keys.up.isDown) {
-      player.anims.play("walk_right", true);
+      player.anims.play(this.walkRightAnimationKey, true);
     } else if (keys.left.isDown && keys.down.isDown) {
-      player.anims.play("walk_left", true);
+      player.anims.play(this.walkLeftAnimationKey, true);
     } else if (keys.right.isDown && keys.down.isDown) {
-      player.anims.play("walk_right", true);
+      player.anims.play(this.walkRightAnimationKey, true);
     } else if (keys.left.isDown) {
-      player.anims.play("walk_left", true);
+      player.anims.play(this.walkLeftAnimationKey, true);
     } else if (keys.right.isDown) {
-      player.anims.play("walk_right", true);
+      player.anims.play(this.walkRightAnimationKey, true);
     } else if (keys.up.isDown) {
-      player.anims.play("walk_up", true);
+      player.anims.play(this.walkUpAnimationKey, true);
     } else if (keys.down.isDown) {
-      player.anims.play("walk_down", true);
+      player.anims.play(this.walkDownAnimationKey, true);
     } else {
-      player.anims.stop();
+      player.anims.play(this.idleAnimationKey, true);
     }
+
+    // Emit player movement data to the server
+    socket.emit("playerMovement", {
+      playerId: this.playerID,
+      x: player.x,
+      y: player.y,
+      animation: player.anims.currentAnim.key,
+    });
   }
 }
