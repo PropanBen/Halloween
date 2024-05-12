@@ -11,49 +11,46 @@ app.get("/", function (req, res) {
 });
 
 server.listen(8081, function () {
-  io.on("connection", function (socket) {
-    //Show avaiable Playercharacters
+  console.log(`Listening on ${server.address().port}`);
+
+  io.on("connection", (socket) => {
+    console.log(`Player connected: ${socket.id}`);
+
     const pt = new playertemplate();
     socket.emit("playertemplate", pt);
 
-    //Show CurrentPlayers
-    io.emit("players", playerlist);
+    socket.on(
+      "createplayerobject",
+      ({ playerid, username, playertemplateid }) => {
+        const player = createPlayer(playerid, username, playertemplateid);
+        playerlist[socket.id] = player;
+        io.emit("currentPlayers", playerlist);
+      }
+    );
 
-    socket.on("getplayerlist", (...args) => {
-      socket.emit("players", playerlist);
+    socket.on("getplayerobjectlist", () => {
+      io.emit("playerobjectlist", playerlist, pt);
     });
 
-    socket.on("getplayertemplates", () => {
-      socket.emit("playerstemplates", pt);
-    });
-
-    // Request Playername
-    socket.emit("request_username");
-
-    socket.broadcast.emit("playerlist", playerlist);
-
-    // Create Player, add it to playerlist
-    socket.on("set_username", ({ playerid, username, playertemplateid }) => {
-      var player = createPlayer(playerid, username, playertemplateid);
-      playerlist[socket.id] = player;
+    socket.on("disconnect", () => {
+      console.log(`Player disconnected: ${socket.id}`);
+      delete playerlist[socket.id];
       io.emit("currentPlayers", playerlist);
     });
-    // Send new player to all other players
-    socket.broadcast.emit("newPlayer", playerlist[socket.id]);
 
-    socket.on("disconnect", function () {
-      delete playerlist[socket.id];
-      io.emit("currentPlayers", playerlist); // Emit to all clients
-    });
-
-    // Listen for player movement data from clients
-    socket.on("playerMovement", function (movementData) {
-      // Broadcast the player movement data to all connected clients including the sender
+    socket.on("playerMovement", (movementData) => {
       io.emit("playerMoved", {
         playerId: socket.id,
         x: movementData.x,
         y: movementData.y,
         animation: movementData.animation,
+      });
+    });
+
+    socket.on("playerAnimation", (animationData) => {
+      io.emit("playerAnimated", {
+        playerId: socket.id,
+        animation: animationData.animation,
       });
     });
   });
@@ -65,6 +62,4 @@ server.listen(8081, function () {
       playertemplateid: playertemplateid,
     };
   }
-
-  console.log(`Listening on ${server.address().port}`);
 });

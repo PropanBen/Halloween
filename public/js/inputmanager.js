@@ -14,6 +14,25 @@ class inputmanager {
 
     this.createAnimations();
     this.updatePlayerMovement();
+
+    // Listen for player movement updates from the server
+    socket.on("playerMovement", (data) => {
+      if (data.playerId !== this.playerID) {
+        const otherPlayer = this.scene.otherPlayers[data.playerId];
+        if (otherPlayer) {
+          otherPlayer.x = data.x;
+          otherPlayer.y = data.y;
+          otherPlayer.anims.play(data.animation, true);
+        }
+      }
+    });
+
+    socket.on("playerAnimated", (animationData) => {
+      const otherPlayer = this.scene.otherPlayers[animationData.playerId];
+      if (otherPlayer) {
+        otherPlayer.anims.play(animationData.animation, true);
+      }
+    });
   }
 
   createAnimations() {
@@ -91,6 +110,11 @@ class inputmanager {
     const { keys, velocity } = this;
     const player = this.scene.player;
 
+    if (!player) {
+      console.log("returns");
+      return; // Return early if player is not initialized
+    }
+
     if (keys.left.isDown) {
       player.setVelocityX(-velocity);
     } else if (keys.right.isDown) {
@@ -135,5 +159,15 @@ class inputmanager {
       y: player.y,
       animation: player.anims.currentAnim.key,
     });
+
+    socket.emit("playerAnimation", { animation: player.anims.currentAnim.key });
+  }
+
+  updateSpriteKey(key) {
+    this.spriteKey = key;
+  }
+
+  updateSocketId(id) {
+    this.playerID = id;
   }
 }
