@@ -11,8 +11,11 @@ class menuscene extends Phaser.Scene {
     let playerobjectlist = {};
 
     socket.emit("getplayerlist");
-    socket.on("startplayers", (players) => {
-      this.playerText.setText("Connected Players: " + players);
+    socket.on("currentPlayers", (players) => {
+      let playerNames = Object.values(players)
+        .map((player) => player.playername)
+        .join(", ");
+      this.playerText.setText("Connected Players: " + playerNames);
     });
 
     this.playerText = this.add.text(20, 20, "Connected Players :", {

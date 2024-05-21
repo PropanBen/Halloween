@@ -51,7 +51,7 @@ class gamescene extends Phaser.Scene {
       frameHeight: 64,
     });
 
-    //Map
+    // Map
     this.load.tilemapTiledJSON("tilemap", "assets/sprites/map/tilemap.json");
 
     // Load tileset images
@@ -66,11 +66,16 @@ class gamescene extends Phaser.Scene {
     // Create Player in Scene
     socket.emit("getplayerobjectlist");
     socket.on("playerobjectlist", (playerlist, pt) => {
+      this.pt = pt; // Store the player template
       Object.keys(playerlist).forEach((id) => {
         if (playerlist[id].playerId === socket.id) {
-          self.addPlayer(playerlist[id], pt); // Adding the current player
+          if (!self.player) {
+            self.addPlayer(playerlist[id], pt); // Adding the current player if not already added
+          }
         } else {
-          self.addOtherPlayer(playerlist[id], pt); // Adding other players
+          if (!self.otherPlayers[playerlist[id].playerId]) {
+            self.addOtherPlayer(playerlist[id], pt); // Adding other players if not already added
+          }
         }
       });
     });
@@ -83,53 +88,97 @@ class gamescene extends Phaser.Scene {
     const stoneTileset = map.addTilesetImage("stone");
 
     // Create layers
-    const groundLayer = map.createLayer("ground", grasTileset, 0, 0);
-    const obstacleLayer = map.createLayer("obstacles", stoneTileset, 0, 0);
+    this.groundLayer = map.createLayer("ground", grasTileset, 0, 0);
+    this.obstacleLayer = map.createLayer("obstacles", stoneTileset, 0, 0);
 
     // Define World Bounds
     this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
 
     // Set collision for obstacle layer
-    obstacleLayer.setCollisionByExclusion([-1]);
+    this.obstacleLayer.setCollisionByExclusion([-1]);
+
+    // Listen for current players update
+    socket.on("currentPlayers", (players) => {
+      // Remove players that are no longer connected
+      Object.keys(this.otherPlayers).forEach((id) => {
+        if (!players[id]) {
+          this.otherPlayers[id].destroy();
+          delete this.otherPlayers[id];
+        }
+      });
+
+      // Add or update players
+      Object.keys(players).forEach((id) => {
+        if (players[id].playerId === socket.id) {
+          if (!this.player) {
+            this.addPlayer(players[id], this.pt); // Add current player if not already added
+          }
+        } else {
+          if (!this.otherPlayers[players[id].playerId]) {
+            this.addOtherPlayer(players[id], this.pt); // Add other players if not already added
+          } else {
+            // Update existing players
+            this.otherPlayers[players[id].playerId].x = players[id].x;
+            this.otherPlayers[players[id].playerId].y = players[id].y;
+          }
+        }
+      });
+    });
+
+    // Emit player movement to server
+    socket.on("playerMoved", (data) => {
+      if (data.playerId !== socket.id) {
+        const otherPlayer = this.otherPlayers[data.playerId];
+        if (otherPlayer) {
+          otherPlayer.x = data.x;
+          otherPlayer.y = data.y;
+          otherPlayer.anims.play(data.animation, true);
+        }
+      }
+    });
   }
 
   update() {
     if (this.inputmanager && this.player) {
       this.inputmanager.updatePlayerMovement();
+      this.playerText.setPosition(
+        this.player.x,
+        this.player.y - this.player.height / 3
+      );
+    }
+
+    if (this.player && this.obstacleLayer) {
+      this.physics.add.collider(this.player, this.obstacleLayer);
+      this.player.body.updateBounds();
     }
   }
 
   addPlayer(playerData, pt) {
     const playerTemplateId = playerData.playertemplateid;
     const spriteKey = pt["race"][playerTemplateId];
-    this.player = this.physics.add.sprite(
-      playerData.x,
-      playerData.y,
-      pt["race"][playerTemplateId]
-    );
+    this.player = this.physics.add.sprite(200, 200, spriteKey);
     this.physics.world.enable(this.player);
     this.player.setCollideWorldBounds(true);
     this.player.setScale(1, 1);
 
-    this.inputmanager = new inputmanager(this, spriteKey, socket.id);
+    // Create and position the player's name text
+    this.playerText = this.add.text(
+      this.player.x,
+      this.player.y - this.player.height / 2 - 10, // Adjusted position above the player sprite
+      playerData.playername,
+      {
+        fill: "#fff",
+      }
+    );
+    this.playerText.setOrigin(0.5, 1); // Set origin to center bottom
+
+    this.inputmanager = new inputmanager(this, spriteKey);
+    this.camermanager = new cameramanager(this);
+    this.camermanager.cameraFollow(this.player);
 
     // Emit player movement to server
     this.input.on("pointermove", (pointer) => {
       socket.emit("playerMoved", { x: pointer.x, y: pointer.y });
-    });
-
-    // Listen for other players' movements
-    socket.on("playerMoved", (data) => {
-      if (data.playerId !== socket.id) {
-        //  console.log(data);
-        // Skip updating own player
-        const otherPlayer = this.otherPlayers[data.playerId];
-        console.log(otherPlayer);
-        if (otherPlayer) {
-          otherPlayer.x = data.x;
-          otherPlayer.y = data.y;
-        }
-      }
     });
   }
 

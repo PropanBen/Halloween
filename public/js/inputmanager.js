@@ -1,8 +1,7 @@
 class inputmanager {
-  constructor(scene, spriteKey, playerID) {
+  constructor(scene, spriteKey) {
     this.scene = scene;
     this.spriteKey = spriteKey;
-    this.playerID = playerID; // Store playerID as a property
 
     this.keys = scene.input.keyboard.addKeys({
       up: Phaser.Input.Keyboard.KeyCodes.W,
@@ -17,14 +16,10 @@ class inputmanager {
 
     // Listen for player movement updates from the server
     socket.on("playerMovement", (data) => {
-      if (data.playerId !== this.playerID) {
-        const otherPlayer = this.scene.otherPlayers[data.playerId];
-        if (otherPlayer) {
-          otherPlayer.x = data.x;
-          otherPlayer.y = data.y;
-          otherPlayer.anims.play(data.animation, true);
-        }
-      }
+      const otherPlayer = this.scene.otherPlayers[data.playerId];
+      otherPlayer.x = data.x;
+      otherPlayer.y = data.y;
+      otherPlayer.anims.play(data.animation, true);
     });
 
     socket.on("playerAnimated", (animationData) => {
@@ -36,13 +31,13 @@ class inputmanager {
   }
 
   createAnimations() {
-    const { scene, spriteKey, playerID } = this;
+    const { scene, spriteKey } = this;
 
-    this.idleAnimationKey = "idle_" + playerID;
-    this.walkDownAnimationKey = "walk_down_" + playerID;
-    this.walkUpAnimationKey = "walk_up_" + playerID;
-    this.walkLeftAnimationKey = "walk_left_" + playerID;
-    this.walkRightAnimationKey = "walk_right_" + playerID;
+    this.idleAnimationKey = "idle";
+    this.walkDownAnimationKey = "walk_down";
+    this.walkUpAnimationKey = "walk_up";
+    this.walkLeftAnimationKey = "walk_left";
+    this.walkRightAnimationKey = "walk_right";
 
     // Create animations
     if (!scene.anims.exists(this.idleAnimationKey)) {
@@ -154,20 +149,11 @@ class inputmanager {
 
     // Emit player movement data to the server
     socket.emit("playerMovement", {
-      playerId: this.playerID,
       x: player.x,
       y: player.y,
       animation: player.anims.currentAnim.key,
     });
 
     socket.emit("playerAnimation", { animation: player.anims.currentAnim.key });
-  }
-
-  updateSpriteKey(key) {
-    this.spriteKey = key;
-  }
-
-  updateSocketId(id) {
-    this.playerID = id;
   }
 }

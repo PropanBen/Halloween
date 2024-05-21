@@ -19,6 +19,10 @@ server.listen(8081, function () {
     const pt = new playertemplate();
     socket.emit("playertemplate", pt);
 
+    socket.on("getplayerlist", () => {
+      io.emit("currentPlayers", playerlist);
+    });
+
     socket.on(
       "createplayerobject",
       ({ playerid, username, playertemplateid }) => {
@@ -44,13 +48,6 @@ server.listen(8081, function () {
         x: movementData.x,
         y: movementData.y,
         animation: movementData.animation,
-      });
-    });
-
-    socket.on("playerAnimation", (animationData) => {
-      io.emit("playerAnimated", {
-        playerId: socket.id,
-        animation: animationData.animation,
       });
     });
   });
