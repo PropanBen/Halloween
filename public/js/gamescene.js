@@ -3,6 +3,9 @@ class gamescene extends Phaser.Scene {
     super({ key: "gamescene" });
   }
 
+  showDebugText = false;  // If true, it shows Touching and Blocked properties from the player object. Only for testing and for understanding the collision logic of Phaser
+  debugtext;
+
   preload() {
     this.load.image("background", "assets/sprites/world/background.png");
 
@@ -136,6 +139,10 @@ class gamescene extends Phaser.Scene {
         }
       }
     });
+
+    if (this.showDebugText) {
+      this.debugtext = this.add.text(0, 0, '-');
+    }
   }
 
   update() {
@@ -151,13 +158,24 @@ class gamescene extends Phaser.Scene {
       this.physics.add.collider(this.player, this.obstacleLayer);
       this.player.body.updateBounds();
     }
+
+    if (this.showDebugText && this.player) {
+      this.debugtext.setText([
+        'Player:',
+        '',
+        JSON.stringify(
+            Phaser.Utils.Objects.Pick(this.player.body, [ 'blocked', 'touching', 'embedded' ]),
+            null,
+            2
+        )
+      ]);
+    }
   }
 
   addPlayer(playerData, pt) {
     const playerTemplateId = playerData.playertemplateid;
     const spriteKey = pt["race"][playerTemplateId];
     this.player = this.physics.add.sprite(200, 200, spriteKey);
-    this.physics.world.enable(this.player);
     this.player.setCollideWorldBounds(true);
     this.player.setScale(1, 1);
 
@@ -176,6 +194,11 @@ class gamescene extends Phaser.Scene {
     this.camermanager = new cameramanager(this);
     this.camermanager.cameraFollow(this.player);
 
+    // Add a collider for every other player object to the player you have just created
+    Object.keys(this.otherPlayers).forEach((id) => {
+        this.physics.add.collider(this.player, this.otherPlayers[id]);  // Important so that the collision with other players happens and "Immovable" is evaluated on other players
+    });
+
     // Emit player movement to server
     this.input.on("pointermove", (pointer) => {
       socket.emit("playerMoved", { x: pointer.x, y: pointer.y });
@@ -189,11 +212,17 @@ class gamescene extends Phaser.Scene {
       playerData.y, // Use the data sent from the server
       pt["race"][playerTemplateId]
     );
-    this.physics.world.enable(otherPlayer);
     otherPlayer.setCollideWorldBounds(true);
+    otherPlayer.body.setImmovable(true);  // Important so that other players can block the player object
     otherPlayer.setScale(1, 1);
 
     // Add the other player to a list to keep track of them
     this.otherPlayers[playerData.playerId] = otherPlayer;
+
+    console.log("other player was created: " + playerData.playerId);
+
+    if (this.player) {
+      this.physics.add.collider(this.player, this.otherPlayers[playerData.playerId]);  // Important so that the collision with other players happens and "Immovable" is evaluated on other players
+    }
   }
 }
