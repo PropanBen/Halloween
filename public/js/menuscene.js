@@ -5,10 +5,10 @@ class menuscene extends Phaser.Scene {
 
   preload() {}
   create() {
-    let currentRaceIndex = 0;
+    const startRaceIndex = 10;  // TODO: Only for testing and developing, as the Alien race (index 10) is currently the only one that works and you save yourself the trouble of choosing a race every time you reload. The default value in release build should be 10.
+    let currentRaceIndex = startRaceIndex;  
     const races = [];
     let currentImage = null;
-    let playerobjectlist = {};
 
     socket.emit("getplayerlist");
     socket.on("currentPlayers", (players) => {
@@ -30,27 +30,27 @@ class menuscene extends Phaser.Scene {
         }
       }
       if (!currentImage) {
-        currentImage = createImageObject(400, 200, races[0]);
+        currentImage = createImageObject(400, 200, races[startRaceIndex]);
         createLeftButton();
         createRightButton();
       } else {
-        currentImage.src = "assets/sprites/player/" + races[0] + ".png";
+        currentImage.src = "assets/sprites/player/" + races[startRaceIndex] + ".png";
       }
     });
 
     function createImageObject(x, y, imageName) {
-      // Erstelle das Bildobjekt
+      // Create the image object
       const image = document.createElement("img");
       const playerLabel = document.createElement("label");
       playerLabel.textContent = "Wähle deine Spielfigur";
       image.id = "playerImage";
       image.src = "assets/sprites/player/" + imageName + ".png";
 
-      // Füge das Bildobjekt zum playerContainer hinzu
+      // Add the image object to the playerContainer
       playerContainer.appendChild(image);
       playerContainer.appendChild(playerLabel);
 
-      // Rückgabe des Bildobjekts
+      // Return of the image object
       return image;
     }
 
@@ -104,43 +104,42 @@ class menuscene extends Phaser.Scene {
 
     const leftButton = document.createElement("button");
     function createLeftButton() {
-      // Erstelle den linken Button
+      // Create the left button
       leftButton.textContent = "<-";
       leftButton.style.marginRight = "10px";
       leftButton.onclick = function () {
-        // Gehe zum vorherigen Rennen
+        // Go to previous race
         currentRaceIndex = (currentRaceIndex - 1 + races.length) % races.length;
         updateImage();
       };
     }
 
-    // Füge den linken Button zum menuContainer hinzu
+    // Add the left button to the menuContainer
     buttonContainer.appendChild(leftButton);
 
     const rightButton = document.createElement("button");
     function createRightButton() {
-      // Erstelle den rechten Button
+      // Create the right button
 
       rightButton.textContent = "->";
       rightButton.onclick = function () {
-        // Gehe zum nächsten Rennen
+        // Go to next race
         currentRaceIndex = (currentRaceIndex + 1) % races.length;
         updateImage();
       };
     }
 
-    // Füge den rechten Button zum menuContainer hinzu
+    // Add the right button to the menuContainer
     buttonContainer.appendChild(rightButton);
 
     function updateImage() {
-      // Aktualisiere das Bild mit dem nächsten Rennen
+      // Update the image with the next race
       currentImage.src =
         "assets/sprites/player/" + races[currentRaceIndex] + ".png";
     }
 
     socket.on("currentPlayers", (players) => {
       const playerNames = [];
-      playerobjectlist = players;
 
       for (const playerId in players) {
         if (players.hasOwnProperty(playerId)) {
@@ -148,8 +147,6 @@ class menuscene extends Phaser.Scene {
           playerNames.push(player.playername);
         }
       }
-      const connectedPlayersString = playerNames.join(", ");
-      //  this.playerText.setText("Connected Players: " + connectedPlayersString);
     });
 
     // Add a button to switch to the GameScene
